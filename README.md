@@ -1,7 +1,5 @@
 # Projeto MES de Smart Operations por Gabriel Tumang e Enzo Zamberlan
 
-# Projeto_1_SMARTOPS
-
 ## Contextualização:
 O projeto desenvolvido neste documento busca integrar os conhecimentos sobre a estrutura da automação industrial e como também técnicas acerca da utilização e funcionalidade da plataforma de ERP Odoo.
 Ademais, vale destacas a integração e uso do MYSQL como forma de manipulação de dados e informações de venda acerca do projeto realizado.
