@@ -126,11 +126,12 @@ def acha_prefixo_mat_prima(product_id):
         else:
             return codigo_produto,"Nada"
 
-def pega_dados_WO(MO_id,iterador):
+def pega_dados_WO(MO_id):
 
     Dic_codmaq = {1:'TR10',2:'CU10',3:'MT10',4:'ET10'}
 
     WorkOrder = Search_WO(MO_id)
+    iterador = 0
     WO_id = WorkOrder[iterador]['id']
     Cod_maq = Dic_codmaq[WorkOrder[iterador]['workcenter_id'][0]]
     Qtd_prod = WorkOrder[iterador]['qty_production']
@@ -141,7 +142,17 @@ def pega_dados_WO(MO_id,iterador):
         VALUES (%s, %s, %s, %s, %s,%s, %s, %s, %s)'''
     val = (WO_id, MO_id, Cod_maq, "CURDATE()", Qtd_prod, Nome_prod, Nome_mp, 'O1000', 0)
 
-    return WO_id, sql, val
+    return WO_id, sql, val, Cod_maq
+
+def checa_disponibilidade (maquina_check, cursor):
+    sql_maquinas_ocupadas = "SELECT Cod_Maq FROM wo_to_factory WHERE WO_Status = 1"
+    cursor.execute(sql_maquinas_ocupadas)
+    maq_producing =  cursor.fetchall()
+
+    if maq_producing == maquina_check:
+        return False
+    
+    return True
 
 # Início do ciclo Odoo SQL:
 while(True):
@@ -163,14 +174,15 @@ while(True):
         else:
             Dic_MO = {Manu_Orders['id']:Manu_Orders['product_id'][0]}
         
-        i = 0
+
         for MO_id in Dic_MO.keys():
             #Buscar WO
-            Lista_dados_WO = pega_dados_WO(MO_id,i)
+            Lista_dados_WO = pega_dados_WO(MO_id)
             #Iniciar WO no Odoo e a fábrica
-            WO_Start(Lista_dados_WO[0])
-            mycursor.execute(Lista_dados_WO[1], Lista_dados_WO[2])
-            i+=1
+            if checa_disponibilidade(Lista_dados_WO[3], mycursor):
+                WO_Start(Lista_dados_WO[0])
+                mycursor.execute(Lista_dados_WO[1], Lista_dados_WO[2])
+
 
 
         mydb.commit()
