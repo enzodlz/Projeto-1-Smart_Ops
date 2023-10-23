@@ -162,11 +162,13 @@ while(True):
         mydb = mysql.connector.connect(
         host="smarters-db.c50q6rz9ggrg.us-east-1.rds.amazonaws.com",
         user="sk8", password="sk8", database="smarters-db-sk8" )
-        #Executar consulta SQL a partir do cursor
+        #Cria cursor
         mycursor = mydb.cursor(buffered=True)
 
         #Checar MO
         Manu_Orders = Search_MO()
+
+        #Cria um dicionário para salvar os WO_id's de cada MO_id
         if(type(Manu_Orders)==list):
             Dic_MO = {}
             for order in Manu_Orders:
@@ -174,16 +176,14 @@ while(True):
         else:
             Dic_MO = {Manu_Orders['id']:Manu_Orders['product_id'][0]}
         
-
+        #Itera pelos pedidos de fabricação e procura a ordem de trabalho correspondente, além de iniciar cada pedido no Odoo
         for MO_id in Dic_MO.keys():
             #Buscar WO
             Lista_dados_WO = pega_dados_WO(MO_id)
-            #Iniciar WO no Odoo e a fábrica
+            #Iniciar WO no Odoo e a fábrica se a estação de trabalho necessária estiver disponível
             if checa_disponibilidade(Lista_dados_WO[3], mycursor):
                 WO_Start(Lista_dados_WO[0])
                 mycursor.execute(Lista_dados_WO[1], Lista_dados_WO[2])
-
-
 
         mydb.commit()
 
@@ -210,12 +210,13 @@ while(True):
 
                 WO_WriteProduction(id, num_pecas)
 
+
+
         #Encerrar work order e mo
         sql4 = "SELECT WO_id, MO_id FROM wo_to_factory WHERE WO_Status = 3"
         mycursor.execute(sql4)
         resultados2 = mycursor.fetchall()
         df2 = pd.DataFrame(resultados2, columns=mycursor.column_names)
-        # pd.set_option('max_columns', None, 'display.expand_frame_repr', False)
         WO_ids_finalizados_fabrica = df2['WO_id'].tolist()
         MO_ids_finalizados_fabrica = df2['MO_id'].tolist()
         MO_ids_finalizados_fabrica = [int(i) for i in MO_ids_finalizados_fabrica]
@@ -240,11 +241,6 @@ while(True):
                             print(f'Erro finalizando MO_id {MO_id} no Odoo')
                             print(f'{err}')
                 
-
-
-
-
-
     except mysql.connector.Error as error:
         print("Failed to run SQL {}".format(error))
         sys.exit()
